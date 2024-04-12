@@ -7,3 +7,4 @@ public interface IKeyValueStore
     DbResultStatus Delete(string userId, string key);
     DbResultStatus GetAll(string userId, out IDictionary<string, string> allData);
 }
+
