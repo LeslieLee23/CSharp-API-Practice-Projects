@@ -13,6 +13,8 @@ public class InMemoryKeyValueStore : IKeyValueStore
             if (!_store.ContainsKey(userId))
             {
                 _store[userId] = new Dictionary<string, string>(); // If user is new, create a new dictionary with the new userId as the key and a empty dictionary as the value
+                _store[userId].Add(key, value); // Add the key-value pair to the newly created dictionary
+                return DbResultStatus.Success;
             }
 
             if (_store[userId].ContainsKey(key))
