@@ -28,7 +28,6 @@ public class InMemoryKeyValueStore : IKeyValueStore
         {
             _lock.ExitWriteLock();
         }
-
     }
 
     public DbResultStatus Read(string userId, string key, out string value)
@@ -51,8 +50,6 @@ public class InMemoryKeyValueStore : IKeyValueStore
         {
             _lock.ExitReadLock();
         }
-
-
     }
 
     public DbResultStatus Update(string userId, string key, string value)
@@ -112,6 +109,5 @@ public class InMemoryKeyValueStore : IKeyValueStore
         {
             _lock.ExitReadLock();
         }
-
     }
 }
