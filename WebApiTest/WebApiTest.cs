@@ -58,6 +58,30 @@ public class InMemoryKeyValueStoreTests
     }
 
     [TestMethod]
+    public void Create_NullUser_ShouldReturnUserIdIsNull()
+    {
+        var result = _store.Create(null, "key1", "value1");
+
+        Assert.AreEqual(DbResultStatus.UserIdIsNull, result, "Creating with null user id should return UserIdIsNull.");
+    }
+
+    [TestMethod]
+    public void Create_NullKey_ShouldReturnKeyIsNull()
+    {
+        var result = _store.Create("key1", null, "value1");
+
+        Assert.AreEqual(DbResultStatus.KeyIsNull, result, "Creating with null key should return KeyIsNull.");
+    }
+
+    [TestMethod]
+    public void Create_NullValue_ShouldReturnValueIsNull()
+    {
+        var result = _store.Create("key1", "value1", null);
+
+        Assert.AreEqual(DbResultStatus.ValueIsNull, result, "Creating with null value should return ValueIsNull.");
+    }
+
+    [TestMethod]
     public void Read_ExistingKey_ReturnsSuccessAndCorrectValue()
     {
         string userId = "user1";
@@ -80,7 +104,7 @@ public class InMemoryKeyValueStoreTests
         _store.Create(userId, key, "someValue");
 
         var result = _store.Read("nonExistentUser", key, out var value);
-        Assert.AreEqual(DbResultStatus.UserNotFound, result, "Readibg a non-existent user ID should return UserNotFound.");
+        Assert.AreEqual(DbResultStatus.UserNotFound, result, "Reading a non-existent user ID should return UserNotFound.");
         Assert.IsNull(value, "The result value should be null when user is not found");
     }
 
@@ -97,9 +121,24 @@ public class InMemoryKeyValueStoreTests
     }
 
     [TestMethod]
+    public void Read_NullUser_ReturnsUserIdIsNull()
+    {
+        var result = _store.Read(null, "someKey", out var value);
+        Assert.AreEqual(DbResultStatus.UserIdIsNull, result, "Reading a null user ID should return UserIdIsNull.");
+        Assert.IsNull(value, "The result value should be null when user is null");
+    }
+
+    [TestMethod]
+    public void Read_NullKey_ReturnsKeyIsNull()
+    {
+        var result = _store.Read("someUserId", null, out var value);
+        Assert.AreEqual(DbResultStatus.KeyIsNull, result, "Reading a null key should return KeyIsNull.");
+        Assert.IsNull(value, "The result value should be null when key is null");
+    }
+
+    [TestMethod]
     public void Update_ExistingKey_SuccessfullyUpdatesValue()
     {
-        // Arrange
         string userId = "user1";
         string key = "key1";
         string initialValue = "initialValue";
@@ -135,6 +174,22 @@ public class InMemoryKeyValueStoreTests
 
         Assert.AreEqual(DbResultStatus.UserNotFound, result, "Updating a key for a non-existent user should return UserNotFound.");
     }
+
+    [TestMethod]
+    public void Update_NullUser_ReturnsUserIdIsNull()
+    {
+        var result = _store.Update(null, "someKey", "someValue");
+
+        Assert.AreEqual(DbResultStatus.UserIdIsNull, result, "Updating null user ID should return UserIdIsNull.");
+    }
+
+    [TestMethod]
+    public void Update_NullKey_ReturnsKeyIsNull()
+    {
+        var result = _store.Update("user1", null, "newValue");
+        Assert.AreEqual(DbResultStatus.KeyIsNull, result, "Updating a null key should return KeyIsNull.");
+    }
+
 
     [TestMethod]
     public void Delete_ExistingKey_ReturnsSuccessAndRemovesKey()
@@ -173,6 +228,21 @@ public class InMemoryKeyValueStoreTests
     }
 
     [TestMethod]
+    public void Delete_NullUser_ReturnsUserIdIsNull()
+    {
+        var result = _store.Delete(null, "someKey");
+
+        Assert.AreEqual(DbResultStatus.UserIdIsNull, result, "Deleting a key for a null user ID should return UserIdIsNull.");
+    }
+
+    [TestMethod]
+    public void Delete_NullKey_ReturnsKeyIsNull()
+    {
+        var result = _store.Delete("user1", null);
+        Assert.AreEqual(DbResultStatus.KeyIsNull, result, "Deleting a null key should return KeyIsNull.");
+    }
+
+    [TestMethod]
     public void GetAll_ExistingUser_ReturnsAllData()
     {
         string userId = "user1";
@@ -201,6 +271,15 @@ public class InMemoryKeyValueStoreTests
         Assert.AreEqual(0, allData.Count, "The returned dictionary should be empty for a non-existent user.");
     }
 
+    [TestMethod]
+    public void GetAll_NullUser_ReturnsUserIdIsNull()
+    {
+        IDictionary<string, string> allData;
+        var result = _store.GetAll(null, out allData);
 
+        Assert.AreEqual(DbResultStatus.UserIdIsNull, result, "Trying to retrieve all data for a null user should return UserIdIsNull.");
+        Assert.IsNotNull(allData, "The returned data dictionary should not be null even if user is null.");
+        Assert.AreEqual(0, allData.Count, "The returned dictionary should be empty for a null user.");
+    }
 
 }
