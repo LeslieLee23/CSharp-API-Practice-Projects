@@ -5,15 +5,49 @@ public class InMemoryKeyValueStore : IKeyValueStore
 
     private readonly Dictionary<string, Dictionary<string, string>> _store = new(); // Create nested dictionary to contain both the key value and the namespace 
 
+    private DbResultStatus ValidateParameters(string userId, string key, string value)
+    {
+        if (userId == null)
+            return DbResultStatus.UserIdIsNull;
+        if (key == null)
+            return DbResultStatus.KeyIsNull;
+        if (value == null)
+            return DbResultStatus.ValueIsNull;
+
+        return DbResultStatus.Success;
+    }
+
+    private DbResultStatus ValidateParameters(string userId, string key)
+    {
+        if (userId == null)
+            return DbResultStatus.UserIdIsNull;
+        if (key == null)
+            return DbResultStatus.KeyIsNull;
+
+        return DbResultStatus.Success;
+    }
+
+    private DbResultStatus ValidateParameters(string userId)
+    {
+        if (userId == null)
+            return DbResultStatus.UserIdIsNull;
+
+        return DbResultStatus.Success;
+    }
+
     public DbResultStatus Create(string userId, string key, string value)
     {
+        var validationResult = ValidateParameters(userId, key, value);
+        if (validationResult != DbResultStatus.Success)
+            return validationResult;
+
         _lock.EnterWriteLock();
         try
         {
             if (!_store.ContainsKey(userId))
             {
-                _store[userId] = new Dictionary<string, string>(); // If user is new, create a new dictionary with the new userId as the key and a empty dictionary as the value
-                _store[userId].Add(key, value); // Add the key-value pair to the newly created dictionary
+                _store[userId] = new Dictionary<string, string>();
+                _store[userId].Add(key, value);
                 return DbResultStatus.Success;
             }
 
@@ -21,8 +55,8 @@ public class InMemoryKeyValueStore : IKeyValueStore
             {
                 return DbResultStatus.KeyAlreadyExists;
             }
-            bool added = _store[userId].TryAdd(key, value);
-            return added ? DbResultStatus.Success : DbResultStatus.Error;
+            _store[userId].Add(key, value);
+            return DbResultStatus.Success;
         }
         finally
         {
@@ -32,10 +66,15 @@ public class InMemoryKeyValueStore : IKeyValueStore
 
     public DbResultStatus Read(string userId, string key, out string value)
     {
+        value = null;
+        var validationResult = ValidateParameters(userId, key);
+        if (validationResult != DbResultStatus.Success)
+            return validationResult;
+
         _lock.EnterReadLock();
         try
         {
-            value = null;
+
             if (_store.TryGetValue(userId, out var userStore))
             {
                 if (userStore.TryGetValue(key, out value))
@@ -54,6 +93,10 @@ public class InMemoryKeyValueStore : IKeyValueStore
 
     public DbResultStatus Update(string userId, string key, string value)
     {
+        var validationResult = ValidateParameters(userId, key, value);
+        if (validationResult != DbResultStatus.Success)
+            return validationResult;
+
         _lock.EnterWriteLock();
         try
         {
@@ -76,6 +119,10 @@ public class InMemoryKeyValueStore : IKeyValueStore
 
     public DbResultStatus Delete(string userId, string key)
     {
+        var validationResult = ValidateParameters(userId, key);
+        if (validationResult != DbResultStatus.Success)
+            return validationResult;
+
         _lock.EnterWriteLock();
         try
         {
@@ -94,10 +141,14 @@ public class InMemoryKeyValueStore : IKeyValueStore
 
     public DbResultStatus GetAll(string userId, out IDictionary<string, string> allData)
     {
+        allData = new Dictionary<string, string>();
+        var validationResult = ValidateParameters(userId);
+        if (validationResult != DbResultStatus.Success)
+            return validationResult;
+
         _lock.EnterReadLock();
         try
         {
-            allData = new Dictionary<string, string>();
             if (_store.TryGetValue(userId, out var userStore))
             {
                 allData = new Dictionary<string, string>(userStore);

@@ -4,5 +4,8 @@ public enum DbResultStatus
     UserNotFound,
     KeyNotFound,
     KeyAlreadyExists,
-    Error
+    Error,
+    UserIdIsNull,
+    KeyIsNull,
+    ValueIsNull
 }
