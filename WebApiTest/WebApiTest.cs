@@ -1,4 +1,6 @@
+using System.Collections.Concurrent;
 namespace WebApiTest;
+
 
 [TestClass]
 public class InMemoryKeyValueStoreTests
@@ -79,6 +81,56 @@ public class InMemoryKeyValueStoreTests
         var result = _store.Create("key1", "value1", null);
 
         Assert.AreEqual(DbResultStatus.ValueIsNull, result, "Creating with null value should return ValueIsNull.");
+    }
+
+    [TestMethod]
+    public void Create_ConcurrentlyWithDifferentKeys_ShouldBeThreadSafe()
+    {
+        int numberOfThreads = 10;
+        var tasks = new List<Task>();
+        var results = new ConcurrentDictionary<string, DbResultStatus>();
+
+        for (int i = 0; i < numberOfThreads; i++)
+        {
+            string key = $"key{i}";
+            tasks.Add(Task.Run(() =>
+            {
+                results[key] = _store.Create("user1", key, $"value{i}");
+            }));
+        }
+
+        Task.WaitAll(tasks.ToArray());
+
+        foreach (var result in results)
+        {
+            Assert.AreEqual(DbResultStatus.Success, result.Value, $"Create operation for {result.Key} should succeed.");
+        }
+    }
+
+    [TestMethod]
+    public void Create_ConcurrentlyWithDuplicateKeys_ShouldHandleDuplicatesGracefully()
+    {
+        int numberOfThreads = 5;
+        var tasks = new List<Task>();
+        string key = "sharedKey";
+        var results = new ConcurrentDictionary<int, DbResultStatus>();
+
+        for (int i = 0; i < numberOfThreads; i++)
+        {
+            int threadId = i;
+            tasks.Add(Task.Run(() =>
+            {
+                results[threadId] = _store.Create("user1", key, $"value{threadId}");
+            }));
+        }
+
+        Task.WaitAll(tasks.ToArray());
+
+        int successCount = results.Values.Count(status => status == DbResultStatus.Success);
+        int duplicateCount = results.Values.Count(status => status == DbResultStatus.KeyAlreadyExists);
+
+        Assert.AreEqual(1, successCount, "Only one create operation should succeed.");
+        Assert.AreEqual(numberOfThreads - 1, duplicateCount, "Duplicate key creations should be identified as such.");
     }
 
     [TestMethod]
