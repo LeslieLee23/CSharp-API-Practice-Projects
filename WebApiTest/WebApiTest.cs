@@ -86,16 +86,17 @@ public class InMemoryKeyValueStoreTests
     [TestMethod]
     public void Create_ConcurrentlyWithDifferentKeys_ShouldBeThreadSafe()
     {
-        int numberOfThreads = 10;
+        int numberOfThreads = 10000;
         var tasks = new List<Task>();
         var results = new ConcurrentDictionary<string, DbResultStatus>();
 
         for (int i = 0; i < numberOfThreads; i++)
         {
-            string key = $"key{i}";
+            int localI = i;
+            string key = $"key{localI}";
             tasks.Add(Task.Run(() =>
             {
-                results[key] = _store.Create("user1", key, $"value{i}");
+                results[key] = _store.Create("user1", key, $"value{localI}");
             }));
         }
 
@@ -104,6 +105,8 @@ public class InMemoryKeyValueStoreTests
         foreach (var result in results)
         {
             Assert.AreEqual(DbResultStatus.Success, result.Value, $"Create operation for {result.Key} should succeed.");
+            Assert.AreEqual(_store.Read("user1", result.Key, out var value), DbResultStatus.Success, $"Key should be saved.");
+            Assert.AreEqual(value, $"value{result.Key.Substring(3)}", $"Value should match the expectation.");
         }
     }
 
