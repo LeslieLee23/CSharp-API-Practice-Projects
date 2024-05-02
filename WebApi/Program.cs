@@ -6,8 +6,10 @@ using StackExchange.Redis;
 
 ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("localhost");
 IDatabase db = redis.GetDatabase();
+
 db.StringSet("foo", "bar");
 Console.WriteLine(db.StringGet("foo"));
+
 var hash = new HashEntry[] { 
     new HashEntry("name", "John"), 
     new HashEntry("surname", "Smith"),
