@@ -64,8 +64,8 @@ public class RedisKeyValueStore : IKeyValueStore
             return validationResult;
             
         string fullKey = BuildKey(userId, key);
-        value = _db.StringGet(fullKey);
-        return value != null ? DbResultStatus.Success : DbResultStatus.KeyNotFound;
+        RedisValue redisValue = _db.StringGet(fullKey);
+        return redisValue.IsNull ? DbResultStatus.KeyNotFound : DbResultStatus.Success;
     }
 
     public DbResultStatus Update(string userId, string key, string value)
@@ -94,7 +94,6 @@ public class RedisKeyValueStore : IKeyValueStore
         foreach (var key in server.Keys(pattern: $"{prefix}*"))
         {
             var value = _db.StringGet(key);
-            // Remove prefix for user-friendliness
             allData[key.ToString().Substring(prefix.Length)] = value;
         }
         return DbResultStatus.Success;
