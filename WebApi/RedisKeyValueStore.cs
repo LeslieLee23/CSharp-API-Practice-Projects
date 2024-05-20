@@ -62,9 +62,10 @@ public class RedisKeyValueStore : IKeyValueStore
         var validationResult = ValidateParameters(userId, key);
         if (validationResult != DbResultStatus.Success)
             return validationResult;
-            
+
         string fullKey = BuildKey(userId, key);
         RedisValue redisValue = _db.StringGet(fullKey);
+        value = redisValue;
         return redisValue.IsNull ? DbResultStatus.KeyNotFound : DbResultStatus.Success;
     }
 
@@ -89,13 +90,20 @@ public class RedisKeyValueStore : IKeyValueStore
     public DbResultStatus GetAll(string userId, out IDictionary<string, string> allData)
     {
         allData = new Dictionary<string, string>();
-        var server = _db.Multiplexer.GetServer(_db.Multiplexer.GetEndPoints().First());
-        var prefix = $"{userId}:";
-        foreach (var key in server.Keys(pattern: $"{prefix}*"))
+        try
         {
-            var value = _db.StringGet(key);
-            allData[key.ToString().Substring(prefix.Length)] = value;
+            var server = _db.Multiplexer.GetServer(_db.Multiplexer.GetEndPoints().First());
+            var prefix = $"{userId}:";
+            foreach (var key in server.Keys(pattern: $"{prefix}*"))
+            {
+                var value = _db.StringGet(key);
+                allData[key.ToString().Substring(prefix.Length)] = value;
+            }
+            return DbResultStatus.Success;
         }
-        return DbResultStatus.Success;
+        catch
+        {
+            return DbResultStatus.Error;
+        }
     }
 }
